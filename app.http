@@ -18,9 +18,11 @@ POST http://localhost:3000/login/
 Content-Type: application/json
 
 {
-  "username":"JoeBiden",
-  "password":"biden@123"
+  "username":"adam_richard",
+  "password":"richard_567"
 }
+
+{"jwtToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkYW1fcmljaGFyZCIsImlhdCI6MTY3OTA1MjMyMX0.geHmdciqxPLZGYLpcwDeJzrhNDmCHmfKfOj9JkzeOuc"}
 
 //Get latest tweets
 

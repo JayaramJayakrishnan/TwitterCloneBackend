@@ -1,13 +1,12 @@
 const express = require("express");
 const sqlite3 = require("sqlite3");
 const path = require("path");
-const format = require("date-fns/format");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const { open } = require("sqlite");
 let db = null;
-const dbPath = path.join(__dirname, "todoApplication.db");
+const dbPath = path.join(__dirname, "twitterClone.db");
 
 const app = express();
 app.use(express.json());
@@ -61,8 +60,7 @@ app.post("/register/", async (request, response) => {
   const selectUserQuery = `
   SELECT * 
   FROM user 
-  WHERE username='${username}
-  '`;
+  WHERE username='${username}'`;
   const dbUser = await db.get(selectUserQuery);
   if (password.length < 6) {
     response.status(400);
@@ -91,9 +89,9 @@ app.post("/login/", async (request, response) => {
   const selectUserQuery = `
   SELECT * 
   FROM user 
-  WHERE username='${username}
-  '`;
+  WHERE username='${username}'`;
   const dbUser = await db.get(selectUserQuery);
+  console.log(dbUser);
   if (dbUser === undefined) {
     response.status(400);
     response.send("Invalid user");
@@ -130,8 +128,7 @@ app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
     (follower JOIN tweet on follower.following_user_id=tweet.user_id) AS T
     JOIN user ON follower.following_user_id=user.user_id 
     WHERE follower.follower_user_id=${userId}
-    ORDER BY tweet.date_time
-    LIMIT 4
+    ORDER BY tweet.date_time DESC
     `;
   const dbResponse = await db.all(getTweetsQuery);
   const responseData = dbResponse.map((res) => ({
@@ -211,8 +208,8 @@ app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
   JOIN user ON user.user_id=tweet.user_id) AS V
   JOIN follower ON follower.following_user_id=user.user_id
   WHERE tweet.tweet_id=${tweetId}
+  AND follower.follower_user_id=${userId}
   GROUP BY tweet.tweet_id
-  HAVING follower.follower_user_id=${userId}
   `;
   const dbResponse = await db.get(getTweetForUser);
   if (dbResponse === undefined) {
@@ -297,10 +294,11 @@ app.get(
       response.status(401);
       response.send("Invalid Request");
     } else {
-      const responseData = dbResponse.map((res) => ({
+      const repliedUsersList = dbResponse.map((res) => ({
         name: res.username,
         reply: res.reply,
       }));
+      const responseData = { replies: repliedUsersList };
       response.send(responseData);
     }
   }
@@ -352,7 +350,7 @@ app.post("/user/tweets", authenticateToken, async (request, response) => {
   const dbUser = await db.get(getLoggedInUserIdQuery);
   const userId = dbUser.user_id;
   const { tweet } = request.body;
-  const dateTime = format(new Date(), "MM-dd-yyyy HH:mm:ss");
+  const dateTime = new Date();
 
   const postTweetQuery = `
   INSERT INTO tweet (tweet, user_id, date_time)
